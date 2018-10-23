@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#795548</color>
+    <color name="colorPrimaryDark">#4E342E</color>
+    <color name="colorAccent">#ff4081</color>
+    <color name="activityBackground">#795548</color>
+    <color name="cardBackground">#eee1ba</color>
+    <color name="widgetBackground">#FFF9C4</color>
+    <color name="ingredientsBackground">#F8BBD0</color>
+
+</resources>

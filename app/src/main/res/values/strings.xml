@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">Baking App</string>
+    <string name="servings_label">Servings:</string>
+    <string name="main_activity_title">Baking Time</string>
+    <string name="no_internet">No Internet Connection</string>
+    <string name="ingredients_label">Ingredients</string>
+    <string name="no_video">No video available</string>
+    <string name="previous_step">Previous Step</string>
+    <string name="next_step">Next Step</string>
+    <string name="last_step_message">This is the last step</string>
+    <string name="recipe_step_label">Recipe Step</string>
+    <string name="tablespoon">tablespoon</string>
+    <string name="teaspoon">teaspoon</string>
+    <string name="add_widget">Add widget</string>
+    <string name="no_video_icon">No video icon</string>
+</resources>
