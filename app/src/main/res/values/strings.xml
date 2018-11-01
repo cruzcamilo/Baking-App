@@ -7,10 +7,13 @@
     <string name="no_video">No video available</string>
     <string name="previous_step">Previous Step</string>
     <string name="next_step">Next Step</string>
+    <string name="first_step_message">This is the first step</string>
     <string name="last_step_message">This is the last step</string>
     <string name="recipe_step_label">Recipe Step</string>
     <string name="tablespoon">tablespoon</string>
     <string name="teaspoon">teaspoon</string>
     <string name="add_widget">Add widget</string>
     <string name="no_video_icon">No video icon</string>
+    <string name="error_message">Ups, something went wrong</string>
+    <string name="empty_view_widget">Select a recipe</string>
 </resources>

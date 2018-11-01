@@ -15,11 +15,11 @@ import java.util.List;
 
 public class RecipeCardAdapter extends RecyclerView.Adapter<RecipeCardAdapter.RecipeCardViewHolder> {
 
-    Context context;
+    private Context context;
     private ArrayList<Recipe> recipes;
     // Implementation of OnItemClickListener taken from:
     // https://antonioleiva.com/recyclerview-listener/
-    OnItemClickListener listener;
+    private OnItemClickListener listener;
 
     public RecipeCardAdapter(Context context, ArrayList<Recipe> recipes, OnItemClickListener listener) {
         this.context = context;

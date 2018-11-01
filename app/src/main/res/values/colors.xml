@@ -7,5 +7,5 @@
     <color name="cardBackground">#eee1ba</color>
     <color name="widgetBackground">#FFF9C4</color>
     <color name="ingredientsBackground">#F8BBD0</color>
-
+    <color name="widgetTitle">#0013e9</color>
 </resources>

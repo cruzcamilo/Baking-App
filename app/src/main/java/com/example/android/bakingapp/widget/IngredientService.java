@@ -16,15 +16,19 @@ public class IngredientService extends IntentService {
 
     public static final String UPDATE_WIDGET =
             "android.appwidget.action.ACTION_UPDATE_WIDGET_BROADCAST";
+    public static final String INGREDIENT_LIST_KEY = "ingredientList";
+    public static final String RECIPE_NAME_KEY = "mRecipeName";
 
     public IngredientService() {
         super("IngredientService");
     }
 
-    public static void startActionUpdateIngredientList(Context context, ArrayList<Ingredient> ingredients) {
+    public static void startActionUpdateIngredientList(Context context,
+                                                       ArrayList<Ingredient> ingredients, String recipeName) {
         Intent intent = new Intent(context, IngredientService.class);
         intent.setAction(ACTION_UPDATE_WIDGET_INGREDIENTS_LIST);
-        intent.putParcelableArrayListExtra("ingredientList", ingredients);
+        intent.putParcelableArrayListExtra(INGREDIENT_LIST_KEY, ingredients);
+        intent.putExtra(RECIPE_NAME_KEY, recipeName);
         context.startService(intent);
     }
 
@@ -34,16 +38,18 @@ public class IngredientService extends IntentService {
             final String action = intent.getAction();
             if (ACTION_UPDATE_WIDGET_INGREDIENTS_LIST.equals(action)) {
                 ArrayList<Ingredient> ingredients =
-                        intent.getParcelableArrayListExtra("ingredientList");
-                handleActionUpdateIngredientsList(ingredients);
+                        intent.getParcelableArrayListExtra(INGREDIENT_LIST_KEY);
+                String recipeName = intent.getStringExtra(RECIPE_NAME_KEY);
+                handleActionUpdateIngredientsList(ingredients, recipeName);
             }
         }
     }
 
-    private void handleActionUpdateIngredientsList(ArrayList<Ingredient> ingredients) {
+    private void handleActionUpdateIngredientsList(ArrayList<Ingredient> ingredients, String recipeName) {
         Intent intent = new Intent(UPDATE_WIDGET);
         intent.setAction(UPDATE_WIDGET);
-        intent.putExtra("ingredientsList",ingredients);
+        intent.putExtra(INGREDIENT_LIST_KEY,ingredients);
+        intent.putExtra(RECIPE_NAME_KEY,recipeName);
         sendBroadcast(intent);
     }
 }

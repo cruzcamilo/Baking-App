@@ -20,13 +20,8 @@
 
             <TextView
                 android:id="@+id/recipe_name_tv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_centerVertical="true"
-                android:textAppearance="@style/TextAppearance.AppCompat.Large"
-                android:layout_marginBottom="8dp"
-                tools:text="Apple Pie" />
+                tools:text="Apple Pie"
+                style="@style/RecipeName" />
 
             <LinearLayout
                 android:id="@+id/servingsLayout"
@@ -52,5 +47,4 @@
             </LinearLayout>
         </RelativeLayout>
     </android.support.v7.widget.CardView>
-
 </LinearLayout>

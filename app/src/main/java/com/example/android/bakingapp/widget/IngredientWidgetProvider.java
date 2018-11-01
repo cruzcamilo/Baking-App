@@ -9,75 +9,70 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.view.View;
 import android.widget.RemoteViews;
 
-import com.example.android.bakingapp.ui.MainActivity;
 import com.example.android.bakingapp.R;
+import com.example.android.bakingapp.ui.MainActivity;
 
 import java.util.ArrayList;
+import java.util.List;
 
-import static com.example.android.bakingapp.widget.IngredientService.UPDATE_WIDGET;
 import static com.example.android.bakingapp.model.Recipe.Ingredient;
+import static com.example.android.bakingapp.widget.IngredientService.INGREDIENT_LIST_KEY;
+import static com.example.android.bakingapp.widget.IngredientService.RECIPE_NAME_KEY;
+import static com.example.android.bakingapp.widget.IngredientService.UPDATE_WIDGET;
 
 /**
  * Implementation of App Widget functionality.
  */
 public class IngredientWidgetProvider extends AppWidgetProvider {
 
-    static ArrayList<Ingredient> ingredientArrayList = new ArrayList<>();
+    static List<Ingredient> mIngredientArrayList = new ArrayList<>();
+    static String mRecipeName;
 
     static void updateAppWidget(Context context, AppWidgetManager appWidgetManager, ArrayList<Ingredient> ingredients,
-                                int appWidgetId) {
+                                String recipeName, int appWidgetId) {
 
         // Construct the RemoteViews object
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.ingredient_widget);
         // Create an Intent to launch MainActivity when clicked
         Intent intent = new Intent(context, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
-        views.setOnClickPendingIntent(R.id.appwidget_text, pendingIntent);
+        views.setOnClickPendingIntent(R.id.empty_widget, pendingIntent);
 
-        ingredientArrayList = ingredients;
-        /*if (ingredientArrayList != null) {
-            for (Ingredient ingredient : ingredientArrayList) {
-                RemoteViews ingredientView = new RemoteViews(context.getPackageName(),
-                        R.layout.widget_ingredient_item);
+        mIngredientArrayList = ingredients;
+        mRecipeName = recipeName;
+        if(mRecipeName == null || mRecipeName.isEmpty()){
+            views.setTextViewText(R.id.appwidget_text, context.getString(R.string.app_name));
+            views.setViewVisibility(R.id.empty_widget, View.VISIBLE);
+        }
 
-                IngredientAdapter ingredientAdapter = new IngredientAdapter();
-                String ingredientFormatted = ingredientAdapter.formatIngredient(ingredient);
-                ingredientView.setTextViewText(R.id.widget_item_tv, ingredientFormatted);
-                views.addView(R.id.widget_listview, ingredientView);
-            }
-        }*/
-
-        //appWidgetManager.updateAppWidget(appWidgetId, views);
+        if(mRecipeName != null &&!mRecipeName.isEmpty()){
+            views.setTextViewText(R.id.appwidget_text, mRecipeName + " " +
+                    context.getString(R.string.ingredients_label));
+            views.setViewVisibility(R.id.empty_widget, View.INVISIBLE);
+        }
 
         Intent intentRemoteView = new Intent(context, IngredientsRemoteViewsService.class);
         views.setRemoteAdapter(R.id.widget_listview, intentRemoteView);
         appWidgetManager.updateAppWidget(appWidgetId, views);
-/*
-        // Set up the collection
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            setRemoteAdapter(context, views);
-        } else {
-            setRemoteAdapterV11(context, views);
-        }*/
-        // Instruct the widget manager to update the widget
-        //appWidgetManager.updateAppWidget(appWidgetId, views);
     }
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         // There may be multiple widgets active, so update all of them
         for (int appWidgetId : appWidgetIds) {
-            updateAppWidget(context, appWidgetManager, ingredientArrayList, appWidgetId);
+            updateAppWidget(context, appWidgetManager, (ArrayList<Ingredient>) mIngredientArrayList,
+                    mRecipeName, appWidgetId);
         }
         super.onUpdate(context, appWidgetManager, appWidgetIds);
     }
 
     public static void updateIngredientsList(Context context, AppWidgetManager appWidgetManager,
-                                             ArrayList<Ingredient> ingredients, int[] appWidgetIds) {
+                                             ArrayList<Ingredient> ingredients, String recipeName, int[] appWidgetIds) {
         for (int appWidgetId : appWidgetIds) {
-            updateAppWidget(context, appWidgetManager, ingredients, appWidgetId);
+            updateAppWidget(context, appWidgetManager, ingredients, recipeName, appWidgetId);
         }
     }
 
@@ -100,9 +95,11 @@ public class IngredientWidgetProvider extends AppWidgetProvider {
 
         if (action.equals(UPDATE_WIDGET)) {
             // refresh all your widgets
-            ingredientArrayList = intent.getExtras().getParcelableArrayList("ingredientsList");
+            mIngredientArrayList = intent.getExtras().getParcelableArrayList(INGREDIENT_LIST_KEY);
+            mRecipeName = intent.getStringExtra(RECIPE_NAME_KEY);
             mgr.notifyAppWidgetViewDataChanged(mgr.getAppWidgetIds(cn), R.id.widget_listview);
-            IngredientWidgetProvider.updateIngredientsList(context, mgr, ingredientArrayList, appWidgetIds);
+            IngredientWidgetProvider.updateIngredientsList(context, mgr,
+                    (ArrayList<Ingredient>) mIngredientArrayList, mRecipeName, appWidgetIds);
         }
         super.onReceive(context, intent);
     }

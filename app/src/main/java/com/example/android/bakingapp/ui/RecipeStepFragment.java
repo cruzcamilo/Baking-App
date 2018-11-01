@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.NavUtils;
@@ -21,6 +23,7 @@ import android.widget.Toast;
 
 import com.example.android.bakingapp.R;
 import com.example.android.bakingapp.databinding.FragmentRecipeStepBinding;
+import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.LoadControl;
@@ -35,24 +38,45 @@ import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
 import static android.content.res.Configuration.ORIENTATION_SQUARE;
 import static com.example.android.bakingapp.model.Recipe.Step;
+import static com.example.android.bakingapp.ui.DetailFragment.POSITION_KEY;
+import static com.example.android.bakingapp.ui.DetailFragment.RECIPE_NAME_KEY;
+import static com.example.android.bakingapp.ui.DetailFragment.STEPS_KEY;
 
 public class RecipeStepFragment extends Fragment {
 
+    private static final String PLAYER_POSITION_KEY = "positionKEY";
+    private static final String STATE_KEY = "state";
+    private static final String STEP_POSITION_KEY = "recipePositionKey";
     private SimpleExoPlayer mExoPlayer;
     private FragmentRecipeStepBinding mBinding;
-    private ArrayList<Step> steps;
-    private String recipeName;
-    private String videoURL;
-    private int pos;
-    private int lastPosition;
-    boolean isTablet;
+    private List<Step> mSteps = new ArrayList<>();
+    private String mRecipeName;
+    private String mVideoURL;
+    private int mPos;
+    private int mLastPosition;
+    boolean mIsTablet;
+    private Long mPlayerPosition;
+    private boolean mPlaybackState;
 
     public RecipeStepFragment() {
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if(mExoPlayer != null){
+            outState.putLong(PLAYER_POSITION_KEY, mPlayerPosition);
+            outState.putBoolean(STATE_KEY, mPlaybackState);
+        }
+        outState.putParcelableArrayList(STEPS_KEY, (ArrayList<? extends Parcelable>) mSteps);
+        outState.putString(RECIPE_NAME_KEY, mRecipeName);
+        outState.putInt(STEP_POSITION_KEY, mPos);
     }
 
     @Override
@@ -60,12 +84,23 @@ public class RecipeStepFragment extends Fragment {
         super.onCreate(savedInstanceState);
         // If true, we're in tablet mode.
         if (getArguments() != null) {
-            steps = getArguments()
-                    .getParcelableArrayList("steps");
-            recipeName = getArguments()
-                    .getString("recipeName");
-            pos = getArguments()
-                    .getInt("position");
+            mSteps = getArguments()
+                    .getParcelableArrayList(STEPS_KEY);
+            mRecipeName = getArguments()
+                    .getString(RECIPE_NAME_KEY);
+            mPos = getArguments()
+                    .getInt(POSITION_KEY);
+        }
+
+        if (savedInstanceState != null && savedInstanceState.getLong(PLAYER_POSITION_KEY) != 0) {
+            mPlayerPosition = savedInstanceState.getLong(PLAYER_POSITION_KEY);
+            mPlaybackState = savedInstanceState.getBoolean(STATE_KEY);
+            mSteps = savedInstanceState.getParcelableArrayList(STEPS_KEY);
+            mRecipeName = savedInstanceState.getString(RECIPE_NAME_KEY);
+            mPos = savedInstanceState.getInt(STEP_POSITION_KEY);
+        } else {
+            mPlayerPosition = C.TIME_UNSET;
+            mPlaybackState = true;
         }
     }
 
@@ -79,44 +114,43 @@ public class RecipeStepFragment extends Fragment {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
 
-        if (steps == null) {
+        if (mSteps == null) {
             Intent intent = getActivity().getIntent();
-            steps = intent.getParcelableArrayListExtra("steps");
-            recipeName = intent.getStringExtra("recipeName");
-            pos = intent.getIntExtra("position", 0);
+            mSteps = intent.getParcelableArrayListExtra(STEPS_KEY);
+            mRecipeName = intent.getStringExtra(RECIPE_NAME_KEY);
+            mPos = intent.getIntExtra(POSITION_KEY, 0);
         }
 
-        getActivity().setTitle(recipeName);
-        Step currentStep = steps.get(pos);
-        lastPosition = steps.size() - 1;
-        isTablet = getResources().getBoolean(R.bool.isTablet);
+        getActivity().setTitle(mRecipeName);
+        Step currentStep = mSteps.get(mPos);
+        mLastPosition = mSteps.size() - 1;
+        mIsTablet = getResources().getBoolean(R.bool.isTablet);
         int orientation = getScreenOrientation();
-        videoURL = currentStep.getVideoURL();
+        mVideoURL = currentStep.getVideoURL();
 
         //Adjust layout based on content
         adjustLayout(orientation);
 
-        if (videoURL.isEmpty()) {
+        if (mVideoURL.isEmpty()) {
             mBinding.exoplayerView.setVisibility(View.GONE);
             mBinding.novideoMessageTv.setVisibility(View.VISIBLE);
             mBinding.novideoIcon.setVisibility(View.VISIBLE);
         } else {
-            initializePlayer(Uri.parse(videoURL));
+            initializePlayer(Uri.parse(mVideoURL));
         }
         mBinding.stepDescriptionTv.setText(currentStep.getDescription());
 
         // Icon made by Lyolya from www.flaticon.com
-
         ImageButton nextButton = (ImageButton) rootView.findViewById(R.id.exo_next_step);
         ImageButton prevButton = (ImageButton) rootView.findViewById(R.id.exo_prev);
 
         prevButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (pos != 0) {
+                if (mPos != 0) {
                     moveToPreviousStep();
                 } else {
-                    Toast.makeText(getActivity(), "This is the first step",
+                    Toast.makeText(getActivity(), getActivity().getString(R.string.first_step_message),
                             Toast.LENGTH_SHORT).show();
                 }
             }
@@ -124,10 +158,10 @@ public class RecipeStepFragment extends Fragment {
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (pos != lastPosition) {
+                if (mPos != mLastPosition) {
                     moveToNextStep();
                 } else {
-                    Toast.makeText(getActivity(), "This is the last step",
+                    Toast.makeText(getActivity(), getActivity().getString(R.string.last_step_message),
                             Toast.LENGTH_SHORT).show();
                 }
             }
@@ -135,7 +169,7 @@ public class RecipeStepFragment extends Fragment {
         mBinding.previousStepArrow.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (pos != 0) {
+                if (mPos != 0) {
                     moveToPreviousStep();
                 }
             }
@@ -143,7 +177,7 @@ public class RecipeStepFragment extends Fragment {
         mBinding.nextStepArrow.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (pos != lastPosition) {
+                if (mPos != mLastPosition) {
                     moveToNextStep();
                 }
             }
@@ -178,34 +212,35 @@ public class RecipeStepFragment extends Fragment {
     }
 
     private void moveToPreviousStep() {
-        if (!isTablet) {
+        if (!mIsTablet) {
             Intent previousStep = new Intent(getActivity(), RecipeStepActivity.class);
-            previousStep.putParcelableArrayListExtra("steps", steps);
-            previousStep.putExtra("recipeName", recipeName);
-            previousStep.putExtra("position", pos - 1);
+
+            previousStep.putParcelableArrayListExtra(STEPS_KEY, (ArrayList<? extends Parcelable>) mSteps);
+            previousStep.putExtra(RECIPE_NAME_KEY, mRecipeName);
+            previousStep.putExtra(POSITION_KEY, mPos - 1);
             if (mExoPlayer != null) {
                 releasePlayer();
             }
             startActivity(previousStep);
         } else {
-            ((DetailActivity) getActivity()).replaceStepFragment(steps,
-                    recipeName, pos - 1);
+            ((DetailActivity) getActivity()).replaceStepFragment((ArrayList<Step>) mSteps,
+                    mRecipeName, mPos - 1);
         }
     }
 
     private void moveToNextStep() {
-        if (!isTablet) {
+        if (!mIsTablet) {
             Intent nextStep = new Intent(getActivity(), RecipeStepActivity.class);
-            nextStep.putParcelableArrayListExtra("steps", steps);
-            nextStep.putExtra("recipeName", recipeName);
-            nextStep.putExtra("position", pos + 1);
+            nextStep.putParcelableArrayListExtra(STEPS_KEY, (ArrayList<? extends Parcelable>) mSteps);
+            nextStep.putExtra(RECIPE_NAME_KEY, mRecipeName);
+            nextStep.putExtra(POSITION_KEY, mPos + 1);
             if (mExoPlayer != null) {
                 releasePlayer();
             }
             startActivity(nextStep);
         } else {
-            ((DetailActivity) getActivity()).replaceStepFragment(steps,
-                    recipeName, pos + 1);
+            ((DetailActivity) getActivity()).replaceStepFragment((ArrayList<Step>) mSteps,
+                    mRecipeName, mPos + 1);
         }
     }
 
@@ -217,18 +252,32 @@ public class RecipeStepFragment extends Fragment {
             mExoPlayer = ExoPlayerFactory.newSimpleInstance(getActivity(), trackSelector, loadControl);
             mBinding.exoplayerView.setPlayer(mExoPlayer);
 
+            // Taken from https://stackoverflow.com/questions/45481775/
+            if (mPlayerPosition != C.TIME_UNSET) {
+                mExoPlayer.seekTo(mPlayerPosition);
+            }
             // Prepare the MediaSource.
-            String userAgent = Util.getUserAgent(getActivity(), "Baking App");
+            String userAgent = Util.getUserAgent(getActivity(), getActivity().getString(R.string.app_name));
             MediaSource mediaSource = new ExtractorMediaSource(mediaUri, new DefaultDataSourceFactory(
                     getActivity(), userAgent), new DefaultExtractorsFactory(), null, null);
             mExoPlayer.prepare(mediaSource);
-            mExoPlayer.setPlayWhenReady(true);
+            mExoPlayer.setPlayWhenReady(mPlaybackState);
         }
     }
 
     private void adjustLayout(int orientation) {
         //Landscape layout settings for recipe step with a video in a phone (landscape)
-        if (orientation == ORIENTATION_LANDSCAPE && !videoURL.isEmpty() && !isTablet) {
+        setLandscapeLayoutPhoneWithVideo(orientation);
+        // Layout settings for landscape layout with a video in a tablet
+        setTabletLayoutWithVideo(orientation);
+        // Layout settings for portrait layout or landscape if there's no video.
+        setLayoutIfNoVideo(orientation);
+        // Landscape layout settings if there's no video.
+        setLandscapeLayoutIfNoVideo(orientation);
+    }
+
+    private void setLandscapeLayoutPhoneWithVideo(int orientation) {
+        if (orientation == ORIENTATION_LANDSCAPE && !mVideoURL.isEmpty() && !mIsTablet) {
             mBinding.stepDescriptionLayout.setVisibility(View.GONE);
             mBinding.exoplayerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FILL);
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
@@ -248,8 +297,10 @@ public class RecipeStepFragment extends Fragment {
                             | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
                             | View.SYSTEM_UI_FLAG_IMMERSIVE);
         }
-        // Layout settings for landscape layout with a video in a tablet
-        if (orientation == ORIENTATION_LANDSCAPE && !videoURL.isEmpty() && isTablet) {
+    }
+
+    private void setTabletLayoutWithVideo(int orientation) {
+        if (orientation == ORIENTATION_LANDSCAPE && !mVideoURL.isEmpty() && mIsTablet) {
             RelativeLayout.LayoutParams paramsPlayer = new RelativeLayout.LayoutParams(
                     RelativeLayout.LayoutParams.MATCH_PARENT,
                     RelativeLayout.LayoutParams.MATCH_PARENT
@@ -268,19 +319,23 @@ public class RecipeStepFragment extends Fragment {
             mBinding.playerLayout.setLayoutParams(paramsLayout);
             mBinding.stepDescriptionLayout.setLayoutParams(descriptionLayout);
         }
-        // Layout settings for portrait layout or landscape if there's no video.
+    }
+
+    private void setLayoutIfNoVideo(int orientation) {
         if (orientation == ORIENTATION_PORTRAIT ||
-                (orientation == ORIENTATION_LANDSCAPE && videoURL.isEmpty())) {
-            if (pos == 0) {
+                (orientation == ORIENTATION_LANDSCAPE && mVideoURL.isEmpty())) {
+            if (mPos == 0) {
                 backButtonDisabledView();
-            } else if (pos > 0 && pos < lastPosition) {
+            } else if (mPos > 0 && mPos < mLastPosition) {
                 standardButtonsView();
-            } else if (pos == lastPosition) {
+            } else if (mPos == mLastPosition) {
                 nextButtonDisabledView();
             }
         }
-        // Landscape layout settings if there's no video.
-        if (orientation == ORIENTATION_LANDSCAPE && videoURL.isEmpty()) {
+    }
+
+    private void setLandscapeLayoutIfNoVideo(int orientation) {
+        if (orientation == ORIENTATION_LANDSCAPE && mVideoURL.isEmpty()) {
             mBinding.descriptionCard.setVisibility(View.VISIBLE);
             mBinding.playerLayout.setLayoutParams(new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -310,6 +365,8 @@ public class RecipeStepFragment extends Fragment {
     public void onPause() {
         super.onPause();
         if (mExoPlayer != null) {
+            mPlayerPosition = mExoPlayer.getCurrentPosition();
+            mPlaybackState = mExoPlayer.getPlayWhenReady();
             mExoPlayer.setPlayWhenReady(false);
         }
     }

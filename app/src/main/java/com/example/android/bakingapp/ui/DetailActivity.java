@@ -8,6 +8,9 @@ import com.example.android.bakingapp.R;
 import java.util.ArrayList;
 
 import static com.example.android.bakingapp.model.Recipe.Step;
+import static com.example.android.bakingapp.ui.DetailFragment.POSITION_KEY;
+import static com.example.android.bakingapp.ui.DetailFragment.RECIPE_NAME_KEY;
+import static com.example.android.bakingapp.ui.DetailFragment.STEPS_KEY;
 
 public class DetailActivity extends AppCompatActivity {
     public Boolean mTabletMode = false;
@@ -28,9 +31,9 @@ public class DetailActivity extends AppCompatActivity {
     public void replaceStepFragment(ArrayList<Step> steps, String recipeName, int pos) {
         RecipeStepFragment stepFragment = new RecipeStepFragment();
         Bundle args = new Bundle();
-        args.putParcelableArrayList("steps", steps);
-        args.putString("recipeName", recipeName);
-        args.putInt("position", pos);
+        args.putParcelableArrayList(STEPS_KEY, steps);
+        args.putString(RECIPE_NAME_KEY, recipeName);
+        args.putInt(POSITION_KEY, pos);
         stepFragment.setArguments(args);
         getSupportFragmentManager().beginTransaction().replace(R.id.container, stepFragment).commit();
     }

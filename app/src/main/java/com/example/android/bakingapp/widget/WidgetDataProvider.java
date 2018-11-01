@@ -5,19 +5,20 @@ import android.content.Intent;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
-import com.example.android.bakingapp.adapters.IngredientAdapter;
 import com.example.android.bakingapp.R;
+import com.example.android.bakingapp.adapters.IngredientAdapter;
 import com.example.android.bakingapp.model.Recipe;
 
 import java.util.ArrayList;
+import java.util.List;
 
-import static com.example.android.bakingapp.widget.IngredientWidgetProvider.*;
+import static com.example.android.bakingapp.widget.IngredientWidgetProvider.mIngredientArrayList;
 
 public class WidgetDataProvider implements RemoteViewsService.RemoteViewsFactory {
 
     private Context mContext;
-    private ArrayList<Recipe.Ingredient> ingredientsList = new ArrayList<>();
-    Intent intent;
+    private List<Recipe.Ingredient> mIngredientsList = new ArrayList<>();
+    private Intent intent;
 
     public WidgetDataProvider(Context applicationContext, Intent intent) {
         mContext = applicationContext;
@@ -31,7 +32,7 @@ public class WidgetDataProvider implements RemoteViewsService.RemoteViewsFactory
 
     @Override
     public void onDataSetChanged() {
-        ingredientsList = ingredientArrayList;
+        mIngredientsList = mIngredientArrayList;
     }
 
     @Override
@@ -41,19 +42,20 @@ public class WidgetDataProvider implements RemoteViewsService.RemoteViewsFactory
 
     @Override
     public int getCount() {
-        return ingredientsList.size();
+        return mIngredientsList.size();
     }
 
     @Override
     public RemoteViews getViewAt(int position) {
         RemoteViews rv = new RemoteViews(mContext.getPackageName(), R.layout.widget_ingredient_item);
         IngredientAdapter ingredientAdapter = new IngredientAdapter(mContext);
-        if (ingredientsList!=null){
-            String ingredient = ingredientAdapter.formatIngredient(ingredientsList.get(position), mContext);
+        if (mIngredientsList !=null){
+            String ingredient = ingredientAdapter.formatIngredient(mIngredientsList.get(position), mContext);
             rv.setTextViewText(R.id.widget_item_tv, ingredient);
         }
         return rv;
     }
+
 
     @Override
     public RemoteViews getLoadingView() {
