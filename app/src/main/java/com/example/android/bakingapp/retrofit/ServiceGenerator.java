@@ -5,7 +5,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ServiceGenerator {
     //Taken from https://futurestud.io/tutorials/retrofit-2-creating-a-sustainable-android-client
-    private static final String BASE_URL = "http://go.udacity.com/";
+    private static final String BASE_URL = "https://d17h27t6h515a5.cloudfront.net/topher/2017/May/59121517_baking/";
 
     private static Retrofit.Builder builder =
             new Retrofit.Builder()

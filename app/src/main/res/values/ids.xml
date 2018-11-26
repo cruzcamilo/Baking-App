@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <item name="exo_next_step" type="id">next_step</item>
+    <item name="exo_next_step" type="id"></item>
 </resources>
