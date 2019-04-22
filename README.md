@@ -1,5 +1,4 @@
 # Baking App
-This app presents 4 recipes, each one includes instructions step-by-step, in some cases accompanied by an illustrative video. The app was made from scratch, it fetches data from a given JSON file stored on a web server.
 
 # Features:
 
